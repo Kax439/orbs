@@ -1,0 +1,1362 @@
+-- NILIZER Epic Edit Admin Script v12.4
+-- Fixed and cleaned version
+-- FOR EDUCATIONAL PURPOSES ONLY
+
+--[[
+    WARNING: This script violates Roblox Terms of Service.
+    Use only in private testing environments with permission.
+    Do not use in public games.
+--]]
+
+-- ============================================
+-- CONFIGURATION SECTION
+-- ============================================
+Version = 12.4
+Bet = "!" -- Command prefix
+Tablet1Size = Vector3.new(3, 0.2, 3)
+Tablet2Size = Vector3.new(3, 4, 0.05)
+TabletMain = Vector3.new(3, 0.2, 3)
+AntiFall = true -- Prevents falling into void
+GuiChat = true -- GUI chat mode
+TimeLeft = 30 -- Shutdown timer
+banlist = {}
+KickingPhrases = {'camball'}
+outlength = 1 -- Tablet distance
+OutputType = true
+clickdetectdist = 3000000
+
+-- ============================================
+-- INITIALIZATION
+-- ============================================
+if script.Parent == nil then
+    script.Parent = Instance.new('Folder')
+end
+
+-- Services
+local Players = game:GetService("Players")
+local Workspace = game:GetService("Workspace")
+local Lighting = game:GetService("Lighting")
+local InsertService = game:GetService("InsertService")
+local RunService = game:GetService("RunService")
+
+-- Core variables
+LocalPlayer = Players.LocalPlayer
+ClonyPooPoo = script:Clone()
+NormPooPoo = script
+Commands = {}
+tablets = {}
+SelOut = false
+ChatNo = true
+CancelSd = false
+Camera = Workspace.CurrentCamera
+SourceName = "DSource"
+SourceValue = ""
+tablets2 = {}
+Removed = false
+newscript = script:Clone()
+
+-- NILIZER system variables
+NILIZERka = {}
+allowed = {'Luperds'}
+nilprilist = {'Luperds'}
+nilprion = false
+nilinsert = "21001552"
+nilsb = newscript
+nilbet = Bet
+nilparts = {"Head", "Left Leg", "Right Leg", "Left Arm", "Right Arm", "Torso"}
+nilab = {'Luperds'}
+nilplayers = {}
+NILIZERka.remove = true
+nilbubblechat = false
+niladmins = allowed
+nilban = banlist
+nilconnect = {}
+nilblocked = {}
+nillog = {"script ran", "loaded"}
+nilcblocked = {}
+nilplatvic = nil
+nilplatpos = 3
+
+-- Platform creation
+nilplat = Instance.new("Part")
+nilplat.Name = "Platform"
+nilplat.Size = Vector3.new(10, 1, 10)
+nilplat.TopSurface = Enum.SurfaceType.Smooth
+nilplat.BottomSurface = Enum.SurfaceType.Smooth
+nilplat.BrickColor = BrickColor.new("Really blue")
+nilplat.Transparency = 0.7
+nilplat.Anchored = true
+
+nilversion = "10.2"
+niltextcolor = Color3.new(1, 0, 0)
+nilchatting = false
+nilipban = {}
+nilip = {}
+nilabtime = 30
+niloverride = false
+
+-- ============================================
+-- UTILITY FUNCTIONS
+-- ============================================
+
+-- Simple logger
+log = function(msg)
+    table.insert(nillog, msg)
+end
+
+-- Add local player to admin lists
+if LocalPlayer then
+    table.insert(nilprilist, LocalPlayer.Name)
+    table.insert(nilab, LocalPlayer.Name)
+    table.insert(allowed, LocalPlayer.Name)
+end
+
+-- Read source info from StringValue children
+for _, v in pairs(script:GetChildren()) do
+    if v:IsA("StringValue") then
+        SourceName = v.Name
+        SourceValue = v.Value
+        print("Source Name:", SourceName)
+    end
+end
+
+-- Create new source container
+NewSource = function(S, P)
+    local DS = NormPooPoo:Clone()
+    for _, ch in pairs(DS:GetChildren()) do
+        ch:Destroy()
+    end
+    local EN = Instance.new('StringValue', DS)
+    EN.Name = SourceName
+    EN.Value = S
+    DS.Parent = P
+    return DS
+end
+
+-- Create local script clone with source
+localScript = function(Source, Parent)
+    local NewScript = ClonyPooPoo:Clone()
+    for _, ch in pairs(NewScript:GetChildren()) do
+        ch:Destroy()
+    end
+    local Souc = Instance.new('StringValue')
+    Souc.Parent = NewScript
+    Souc.Name = SourceName
+    Souc.Value = Source
+    NewScript.Parent = Parent
+    return NewScript
+end
+
+CharacterName = LocalPlayer and LocalPlayer.Name or "Player"
+
+-- ============================================
+-- COLOR DEFINITIONS
+-- ============================================
+Colors = {
+    ["Red"] = Color3.new(1,0,0),
+    ["PinkRed"] = Color3.new(1,0,0.5),
+    ["Orange"] = Color3.new(1,0.5,0),
+    ["Yellow"] = Color3.new(1,1,0),
+    ["Green"] = Color3.new(0,1,0),
+    ["Blue"] = Color3.new(0,0,1),
+    ["LightBlue"] = Color3.new(0,1,1),
+    ["Pink"] = Color3.new(1,0,1),
+    ["Magenta"] = Color3.new(0.54,0,0.54),
+    ["Cyan"] = Color3.new(0,0.6,1),
+    ["White"] = Color3.new(1,1,1),
+    ["Grey"] = Color3.new(0.5,0.5,0.5),
+    ["Black"] = Color3.new(0,0,0)
+}
+
+-- Character accessories storage
+CharStuff = {}
+if LocalPlayer and LocalPlayer.Character then
+    for _, Item in pairs(LocalPlayer.Character:GetChildren()) do
+        if Item:IsA('CharacterMesh') or Item:IsA('Hat') or Item:IsA('Shirt') or Item:IsA('Pants') then
+            table.insert(CharStuff, Item:Clone())
+        end
+    end
+end
+
+print("NILIZER Epic Edit v" .. Version .. " loaded")
+
+-- ============================================
+-- LOAD CHARACTER FUNCTION
+-- ============================================
+function LoadCharacter(DaCFrame)
+    if LocalPlayer and LocalPlayer.Character and LocalPlayer.Character.Parent == workspace then
+        LocalPlayer.Character:Destroy()
+    end
+
+    local success, asset = pcall(function()
+        return InsertService:LoadAsset(68452456)
+    end)
+
+    if not success or not asset then
+        warn("Failed to load character asset")
+        return
+    end
+
+    local Character = asset:GetChildren()[1]
+    if not Character then
+        warn("No character found in loaded asset")
+        asset:Destroy()
+        return
+    end
+
+    Character.Name = CharacterName or LocalPlayer.Name
+    Character.Parent = Workspace
+
+    if LocalPlayer then
+        LocalPlayer.Character = Character
+    end
+
+    if Character:FindFirstChild('Torso') then
+        Character.Torso.CFrame = DaCFrame
+    end
+    
+    if Camera and Character:FindFirstChildOfClass('Humanoid') then
+        Camera.CameraSubject = Character:FindFirstChildOfClass('Humanoid')
+        Camera.CameraType = Enum.CameraType.Custom
+    end
+
+    -- Custom character dressing
+    if LocalPlayer and LocalPlayer.Name == 'Luperds' then
+        -- Custom outfit for Luperds
+        local Shirt = Instance.new("Shirt", Character)
+        Shirt.ShirtTemplate = "http://www.roblox.com/asset/?id=92526961"
+        local Pants = Instance.new("Pants", Character)
+        Pants.PantsTemplate = "http://www.roblox.com/asset/?id=92527064"
+
+        -- Load accessories
+        local gG = nil
+        local ok, asset2 = pcall(function()
+            return InsertService:LoadAsset(19380685)
+        end)
+        if ok and asset2 then
+            gG = asset2
+        else
+            local ok2, asset3 = pcall(function()
+                return InsertService:LoadAsset(78033664)
+            end)
+            if ok2 and asset3 then
+                gG = asset3
+            end
+        end
+
+        if gG then
+            gG.Parent = Workspace
+            for _, child in pairs(gG:GetChildren()) do
+                child.Parent = Character
+            end
+            gG:Destroy()
+        end
+
+    elseif LocalPlayer and LocalPlayer.Name == 'lolNTCH1234' then
+        -- Custom for lolNTCH1234
+        local Part = Instance.new("Part", Character)
+        Part.Name = "Horus"
+        Part.Size = Vector3.new(2,2,2)
+        Part.CanCollide = false
+        Part.Locked = true
+        Part:BreakJoints()
+        local Weld = Instance.new("Weld", Part)
+        Weld.Part0 = Part
+        Weld.Part1 = Character.Head
+        Weld.C0 = CFrame.new(0,-0.5,0)
+        local Mesh = Instance.new("SpecialMesh", Part)
+        Mesh.MeshType = Enum.MeshType.FileMesh
+        Mesh.MeshId = "http://www.roblox.com/asset/?id=21712738"
+        Mesh.TextureId = "http://www.roblox.com/asset/?id=102083848"
+        
+        local Shirt = Instance.new("Shirt", Character)
+        Shirt.ShirtTemplate = "http://www.roblox.com/asset/?id=92526961"
+        local Pants = Instance.new("Pants", Character)
+        Pants.PantsTemplate = "http://www.roblox.com/asset/?id=92527064"
+    else
+        -- Default accessories
+        if CharStuff then
+            for _, v in pairs(CharStuff) do
+                v:Clone().Parent = Character
+            end
+        end
+    end
+
+    -- Color all parts pastel brown
+    for _, v in pairs(Character:GetChildren()) do
+        if v:IsA("BasePart") then
+            v.BrickColor = BrickColor.new("Pastel brown")
+        end
+    end
+
+    -- Cleanup
+    if asset and type(asset.Destroy) == "function" then
+        pcall(function() asset:Destroy() end)
+    end
+end
+
+-- ============================================
+-- CHAT FUNCTIONS
+-- ============================================
+
+-- Advanced chat with animation
+Chat2 = function(Msg)
+    if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Head") then
+        local Part = Instance.new("Part", LocalPlayer.Character)
+        Part.CanCollide = false
+        Part.Transparency = 1
+        Part.CFrame = LocalPlayer.Character.Head.CFrame * CFrame.new(0, 3, 0)
+        Part:BreakJoints()
+
+        local Pos = Instance.new("BodyPosition", Part)
+        Pos.maxForce = Vector3.new(math.huge, math.huge, math.huge)
+        Pos.position = LocalPlayer.Character.Head.Position
+
+        local BBG = Instance.new("BillboardGui", LocalPlayer.Character)
+        BBG.Adornee = Part
+        BBG.Size = UDim2.new(0, 20 * #Msg, 0, 30)
+        BBG.StudsOffset = Vector3.new(0, 3, 0)
+
+        local Txt = Instance.new("TextLabel", BBG)
+        Txt.Text = ""
+        Txt.FontSize = "Size18"
+        Txt.TextColor3 = Color3.new(1, 1, 1)
+        
+        -- Color animation coroutine
+        coroutine.wrap(function()
+            while Txt.Parent do
+                for i = 0, 1, 0.1 do 
+                    Txt.TextColor3 = Color3.new(i, 0, 0) 
+                    wait() 
+                end
+                for i = 1, 0, -0.1 do 
+                    Txt.TextColor3 = Color3.new(i, 0, 0) 
+                    wait() 
+                end
+                for i = 0, 1, 0.1 do 
+                    Txt.TextColor3 = Color3.new(0, i, 0) 
+                    wait() 
+                end
+                for i = 1, 0, -0.1 do 
+                    Txt.TextColor3 = Color3.new(0, i, 0) 
+                    wait() 
+                end
+                for i = 0, 1, 0.1 do 
+                    Txt.TextColor3 = Color3.new(0, 0, i) 
+                    wait() 
+                end
+                for i = 1, 0, -0.1 do 
+                    Txt.TextColor3 = Color3.new(0, 0, i) 
+                    wait() 
+                end
+            end
+        end)()
+        
+        Txt.BackgroundColor3 = Color3.new(1, 1, 1)
+        Txt.Size = UDim2.new(1, 0, 1, 0)
+        
+        if #Msg < 50 then
+            for i = 1, #Msg do
+                Txt.Text = Txt.Text .. Msg:sub(i, i)
+                wait(0.09)
+            end
+        else
+            Txt.Text = Msg
+        end
+        
+        -- Fade out animation
+        coroutine.wrap(function()
+            for i = 3, 100 do
+                BBG.StudsOffset = Vector3.new(0, i/10, 0)
+                Pos.position = LocalPlayer.Character.Head.Position
+                Txt.TextTransparency = i / 100
+                Txt.BackgroundTransparency = i / 100
+                wait()
+            end
+            Part:Destroy()
+            BBG:Destroy()
+        end)()
+    end
+end
+
+-- Simple chat function
+Chat = function(Msg)
+    local char = LocalPlayer.Character
+    if not char then return end
+    
+    local head = char:FindFirstChild("Head")
+    if not head then return end
+    
+    local part = Instance.new("Part")
+    part.Parent = char
+    part.CanCollide = false
+    part.Anchored = false
+    part.Transparency = 1
+    part.CFrame = head.CFrame * CFrame.new(0, 3, 0)
+    part:BreakJoints()
+    
+    local pos = Instance.new("BodyPosition", part)
+    pos.MaxForce = Vector3.new(1e9, 1e9, 1e9)
+    pos.Position = head.Position
+    
+    local BBG = Instance.new("BillboardGui")
+    BBG.Parent = char
+    BBG.Adornee = part
+    BBG.Size = UDim2.new(0, 20 * #Msg, 0, 30)
+    BBG.StudsOffset = Vector3.new(0, 3, 0)
+    
+    local Txt = Instance.new("TextLabel", BBG)
+    Txt.Text = Msg
+    Txt.Font = Enum.Font.SourceSansBold
+    Txt.TextScaled = true
+    Txt.TextColor3 = Color3.new(1, 1, 1)
+    Txt.BackgroundTransparency = 1
+    Txt.Size = UDim2.new(1, 0, 1, 0)
+    
+    -- Color animation
+    coroutine.wrap(function()
+        while Txt.Parent do
+            for i = 0, 1, 0.1 do Txt.TextColor3 = Color3.new(i, 0, 0) wait() end
+            for i = 1, 0, -0.1 do Txt.TextColor3 = Color3.new(i, 0, 0) wait() end
+            for i = 0, 1, 0.1 do Txt.TextColor3 = Color3.new(0, i, 0) wait() end
+            for i = 1, 0, -0.1 do Txt.TextColor3 = Color3.new(0, i, 0) wait() end
+            for i = 0, 1, 0.1 do Txt.TextColor3 = Color3.new(0, 0, i) wait() end
+            for i = 1, 0, -0.1 do Txt.TextColor3 = Color3.new(0, 0, i) wait() end
+        end
+    end)()
+    
+    -- Float and fade
+    coroutine.wrap(function()
+        for i = 3, 100 do
+            BBG.StudsOffset = Vector3.new(0, i/10, 0)
+            pos.Position = head.Position
+            Txt.TextTransparency = i / 100
+            wait()
+        end
+        part:Destroy()
+        BBG:Destroy()
+    end)()
+end
+
+-- Check if player is admin
+check = function(p)
+    for _, n in pairs(allowed) do
+        if p and p.Name == n then
+            return true
+        end
+    end
+    return false
+end
+
+-- ============================================
+-- TABLET MANAGEMENT
+-- ============================================
+
+GetTablets = function(player)
+    local _tablets = {}
+    for _, tablet in pairs(tablets) do
+        if tablet:FindFirstChild("Recipient") then
+            if tablet.Recipient.Value == player then
+                table.insert(_tablets, tablet)
+            end
+        end
+    end
+    return _tablets
+end
+
+GetTablets2 = function(player)
+    local _tablets = {}
+    for _, tablet in pairs(tablets2) do
+        if tablet:FindFirstChild("Recipient") then
+            if tablet.Recipient.Value == player then
+                table.insert(_tablets, tablet)
+            end
+        end
+    end
+    return _tablets
+end
+
+-- ============================================
+-- OUTPUT SYSTEM
+-- ============================================
+
+-- Diamond ping output
+function ping(tab, Color)
+    for i = 1, #tab do
+        local p = Instance.new("Part", Workspace)
+        p.Name = "Output3"
+        p.Size = Vector3.new(1.25, 1.25, 1.25)
+        p.Transparency = 0.5
+        p.Anchored = true
+        p.CanCollide = false
+        p.Color = Color
+        p.TopSurface = "Smooth"
+        p.CFrame = LocalPlayer.Character.Torso.CFrame + Vector3.new(0, 900, 0)
+        p.BottomSurface = "Smooth"
+        
+        local xv = Instance.new("SpecialMesh", p)
+        xv.MeshType = "FileMesh"
+        xv.Name = "me"
+        xv.MeshId = "http://www.roblox.com/Asset/?id=9756362"
+        xv.Scale = Vector3.new(1.25, 1.25, 1.25)
+        xv.TextureId = ""
+        xv.VertexColor = Vector3.new(0, 0, 1)
+        
+        local bbg = Instance.new("BillboardGui", p)
+        bbg.Name = p.Name
+        bbg.StudsOffset = Vector3.new(0, 1, -0.2)
+        bbg.Size = UDim2.new(1, 0, 1, 0)
+        
+        local pn = Instance.new("TextLabel", bbg)
+        pn.BackgroundTransparency = 1
+        pn.Position = UDim2.new(0, 0, 0.1, 0)
+        pn.Size = UDim2.new(0.9, 0, 0.4, 0)
+        pn.TextColor3 = Color
+        pn.TextStrokeColor3 = Color3.new(0, 0, 1)
+        pn.TextStrokeTransparency = 0
+        pn.FontSize = Enum.FontSize.Size12
+        pn.Text = tab[i]
+        pn.Name = tab[i]
+        
+        -- Orbital movement
+        coroutine.wrap(function()
+            local f = i * (200/#tab)
+            while wait() do
+                f = f + 0.4
+                p.CFrame = CFrame.new(
+                    LocalPlayer.Character.Torso.Position + 
+                    (Vector3.new(
+                        math.sin(f/100*math.pi),
+                        0.05,
+                        math.cos(f/100*math.pi)
+                    ) * 10)
+                )
+            end
+        end)()
+    end
+end
+
+-- Main output function
+Output = function(message, color, recipient, stick)
+    recipient = recipient or LocalPlayer
+    if not recipient.Character or not recipient.Character:FindFirstChild('Head') or not recipient.Character:FindFirstChild('Humanoid') then
+        return
+    end
+    
+    local _tablets = GetTablets(recipient)
+    local _pos = recipient.Character.Head.CFrame * CFrame.new(7, 7, 7)
+    stick = stick or 100
+    
+    if #_tablets >= stick then
+        _tablets[1]:Destroy()
+    end
+    
+    local model = Instance.new("Model")
+    model.Parent = Workspace
+    model.Name = "Output::" .. recipient.Name
+    
+    local part = Instance.new("Part")
+    part.Parent = model
+    part.Transparency = 0.5
+    part.CanCollide = false
+    part.TopSurface = "Smooth"
+    part.BottomSurface = "Smooth"
+    part.FormFactor = "Plate"
+    part.Color = color[1]
+    part.Size = Tablet1Size
+    part.CFrame = _pos
+    
+    if SelOut then
+        local atc = Instance.new("SelectionPartLasso", part)
+        atc.Part = part
+        atc.Humanoid = recipient.Character.Humanoid
+        atc.Color = BrickColor.new(color[1].r, color[1].g, color[1].b)
+        atc.Name = 'Test'
+    end
+    
+    local click = Instance.new("ClickDetector")
+    click.Parent = part
+    click.MaxActivationDistance = clickdetectdist
+    click.MouseClick:Connect(function(player)
+        if player == recipient or player.Name == "1231234w" then
+            model:Destroy()
+        end
+    end)
+    
+    local box = Instance.new("SelectionBox")
+    box.Parent = part
+    box.Adornee = part
+    box.Color = BrickColor.new(color[1].r, color[1].g, color[1].b)
+    
+    local pos = Instance.new("BodyPosition", part)
+    pos.maxForce = Vector3.new(math.huge, math.huge, math.huge)
+    pos.position = _pos.p
+    
+    local gyro = Instance.new("BodyGyro", part)
+    gyro.maxTorque = Vector3.new(math.huge, math.huge, math.huge)
+    
+    local recip = Instance.new("ObjectValue", model)
+    recip.Name = "Recipient"
+    recip.Value = recipient
+    
+    local Gui = Instance.new("BillboardGui", model)
+    Gui.Adornee = part
+    Gui.Size = UDim2.new(1, 0, 1, 0)
+    Gui.StudsOffset = Vector3.new(0, 3, 0)
+    
+    local Frame = Instance.new("Frame", Gui)
+    Frame.Size = UDim2.new(1, 0, 1, 0)
+    Frame.BackgroundTransparency = 1
+    
+    local Label = Instance.new("TextLabel", Frame)
+    Label.Size = UDim2.new(1, 0, 1, 0)
+    Label.FontSize = "Size12"
+    Label.TextColor3 = color[1]
+    Label.Text = message
+    Label.BackgroundTransparency = 1
+    Label.Font = 'Legacy'
+    
+    table.insert(tablets, model)
+    return model
+end
+
+-- Torso utility function
+local function GetTorso(character)
+    return character:FindFirstChild("Torso") or 
+           character:FindFirstChild("UpperTorso") or 
+           character:FindFirstChild("LowerTorso")
+end
+
+-- Output2 with orbiting animation
+Output2 = function(message, color, recipient, stick)
+    if not recipient or not recipient.Character then return end
+    if not recipient.Character:FindFirstChild("Head") then return end
+    
+    stick = stick or 100
+    local torso = GetTorso(recipient.Character)
+    if not torso then return end
+    
+    local _tablets = GetTablets2(recipient)
+    if _tablets and #_tablets >= stick then
+        _tablets[1]:Destroy()
+    end
+    
+    local model = Instance.new("Model")
+    model.Name = "Output::" .. recipient.Name
+    model.Parent = Workspace
+    
+    local part = Instance.new("Part", model)
+    part.Color = color[1]
+    part.Transparency = 0.5
+    part.CanCollide = false
+    part.Size = Vector3.new(1.5, 1.5, 1.5)
+    part.Shape = Enum.PartType.Ball
+    part.CFrame = recipient.Character.Head.CFrame * CFrame.new(10, 10, 10)
+    
+    local click = Instance.new("ClickDetector", part)
+    click.MaxActivationDistance = clickdetectdist
+    click.MouseClick:Connect(function(player)
+        if player == recipient or player.Name == "1231234w" then
+            model:Destroy()
+        end
+    end)
+    
+    local box = Instance.new("SelectionBox", part)
+    box.Adornee = part
+    box.LineThickness = 0.05
+    box.Color3 = color[1]
+    
+    local pos = Instance.new("BodyPosition", part)
+    pos.MaxForce = Vector3.new(1e9, 1e9, 1e9)
+    pos.Position = part.Position
+    
+    local gyro = Instance.new("BodyGyro", part)
+    gyro.MaxTorque = Vector3.new(1e9, 1e9, 1e9)
+    
+    local gui = Instance.new("BillboardGui", part)
+    gui.Adornee = part
+    gui.Size = UDim2.new(4, 0, 1.2, 0)
+    gui.StudsOffset = Vector3.new(0, 2.5, 0)
+    gui.AlwaysOnTop = true
+    
+    local frame = Instance.new("Frame", gui)
+    frame.Size = UDim2.new(1, 0, 1, 0)
+    frame.BackgroundTransparency = 1
+    
+    local label = Instance.new("TextLabel", frame)
+    label.Size = UDim2.new(1, 0, 1, 0)
+    label.BackgroundTransparency = 1
+    label.TextColor3 = color[1]
+    label.Text = message
+    label.TextScaled = true
+    label.Font = Enum.Font.SourceSansBold
+    
+    -- Orbiting animation
+    for i = 0, 380, 2.5 do
+        if not recipient.Character then break end
+        
+        local torsoNow = GetTorso(recipient.Character)
+        if not torsoNow then break end
+        
+        local offset = CFrame.new(math.sin(math.rad(i)) * 4, 1.5, math.cos(math.rad(i)) * 4)
+        pos.Position = (torsoNow.CFrame * offset).Position
+        gyro.CFrame = CFrame.Angles(0, math.rad(i), 0)
+        task.wait()
+    end
+    
+    model:Destroy()
+end
+
+-- Output3 function
+Output3 = function(message, color, recipient, stick)
+    recipient = recipient or LocalPlayer
+    stick = stick or 100
+    
+    if not recipient or not recipient.Character or not recipient.Character:FindFirstChild("Head") then
+        return
+    end
+    
+    local posCFrame = recipient.Character.Head.CFrame * CFrame.new(7, 7, 7)
+    local _tablets = GetTablets(recipient)
+    
+    if _tablets and #_tablets >= stick then
+        _tablets[1]:Destroy()
+    end
+    
+    local model = Instance.new("Model")
+    model.Parent = Workspace
+    model.Name = "Output::" .. recipient.Name
+    
+    local part = Instance.new("Part", model)
+    part.Transparency = 0.5
+    part.CanCollide = false
+    part.Color = color[1]
+    part.Size = Vector3.new(1.5, 2.5, 0.05)
+    part.CFrame = posCFrame
+    
+    local click = Instance.new("ClickDetector", part)
+    click.MaxActivationDistance = clickdetectdist
+    click.MouseClick:Connect(function(player)
+        if player == recipient or player.Name == "1231234w" then
+            model:Destroy()
+        end
+    end)
+    
+    local box = Instance.new("SelectionBox", part)
+    box.Adornee = part
+    box.Color3 = color[1]
+    
+    local recip = Instance.new("ObjectValue", model)
+    recip.Name = "Recipient"
+    recip.Value = recipient
+    
+    local gui = Instance.new("BillboardGui", model)
+    gui.Adornee = part
+    gui.Size = UDim2.new(1, 0, 1, 0)
+    gui.StudsOffset = Vector3.new(0, 3, 0)
+    
+    local frame = Instance.new("Frame", gui)
+    frame.Size = UDim2.new(1, 0, 1, 0)
+    frame.BackgroundTransparency = 1
+    
+    local label = Instance.new("TextLabel", frame)
+    label.Size = UDim2.new(1, 0, 1, 0)
+    label.Font = Enum.Font.Legacy
+    label.FontSize = Enum.FontSize.Size12
+    label.TextColor3 = color[1]
+    label.BackgroundTransparency = 1
+    label.Text = message
+    
+    return model
+end
+
+-- Create multiple tablets
+CreateTablets3 = function(Texts, Colors, Player)
+    local tab = {}
+    for i = 1, #Texts do
+        local Color = Colors[i] or Colors[1]
+        local Tb = Output3(Texts[i], {Color}, Player)
+        table.insert(tab, Tb)
+    end
+    return tab
+end
+
+-- Update tablets position
+UpdateTablets = function()
+    pcall(function()
+        local _tablets = GetTablets(LocalPlayer)
+        local counter = 0
+        
+        if #_tablets == 1 then
+            local torso = LocalPlayer.Character.Torso
+            local pos = torso.CFrame + torso.CFrame.lookVector
+            if _tablets[1] and _tablets[1]:FindFirstChild("Part") then
+                _tablets[1].Part.BodyPosition.position = pos.p
+                _tablets[1].Part.BodyGyro.cframe = pos * CFrame.Angles(math.rad(70), 0, 0)
+            end
+        end
+        
+        for i = 180, -180, -360/#_tablets do
+            counter = counter + 1
+            if _tablets[counter] and _tablets[counter]:FindFirstChild("Part") then
+                local tabletPosition = LocalPlayer.Character.Torso.CFrame * 
+                    CFrame.Angles(0, math.rad(i), 0) * 
+                    CFrame.new(0, 0, -15 - (#_tablets / outlength))
+                
+                _tablets[counter].Part.BodyPosition.position = tabletPosition.p
+                _tablets[counter].Part.BodyGyro.cframe = tabletPosition * CFrame.Angles(math.rad(70), 0, 0)
+            end
+        end
+    end)
+end
+
+-- ============================================
+-- PLAYER MANAGEMENT
+-- ============================================
+
+-- Get players by string
+function GetPlayers(string, Player)
+    local Rtn = {}
+    if Player == nil then Player = LocalPlayer end
+    
+    if string == "all" then
+        for _, v in pairs(Players:GetPlayers()) do
+            if v then table.insert(Rtn, v) end
+        end
+    elseif string == "others" then
+        for _, v in pairs(Players:GetPlayers()) do
+            if v and v ~= Player then table.insert(Rtn, v) end
+        end
+    elseif string == "random" then
+        local players = Players:GetPlayers()
+        if #players > 0 then
+            table.insert(Rtn, players[math.random(1, #players)])
+        end
+    elseif string == "me" then
+        table.insert(Rtn, Player)
+    elseif string == "vetrans" then
+        for _, v in pairs(Players:GetPlayers()) do
+            if v and v.AccountAge > 365 then table.insert(Rtn, v) end
+        end
+    elseif string == "nonvetrans" or string == "notvetrans" then
+        for _, v in pairs(Players:GetPlayers()) do
+            if v and v.AccountAge < 365 then table.insert(Rtn, v) end
+        end
+    else
+        for _, v in pairs(Players:GetPlayers()) do
+            if v and string.sub(string.lower(v.Name), 1, #string) == string.lower(string) then
+                table.insert(Rtn, v)
+            end
+        end
+    end
+    return Rtn
+end
+
+-- ============================================
+-- CHAT HANDLING
+-- ============================================
+
+OnChatted = function(Msg, Speaker)
+    if Removed == false then
+        -- Check for commands
+        for Name, Command in pairs(Commands) do
+            if Msg:sub(1, #Command.Command + 1):lower() == Command.Command:lower() .. "" .. Bet .. "" then
+                local Ran, Error = coroutine.resume(coroutine.create(function()
+                    Command.Func(Msg:sub(#Command.Command + 2), Speaker)
+                end))
+                if not Ran then
+                    Output(Error, {Colors.Red}, LocalPlayer)
+                end
+            end
+        end
+        
+        -- Display chat message
+        if GuiChat == true then
+            if ChatNo == true then
+                Chat(Msg)
+            else
+                Chat2(Msg)
+            end
+        else
+            pcall(function()
+                game:GetService('Chat'):Chat(LocalPlayer.Character.Head, Msg, Enum.ChatColor.Red)
+            end)
+        end
+    end
+end
+
+OnChatted2 = function(m, s)
+    if m == 'fix' .. Bet then
+        LocalPlayer.Chatted:Disconnect(OnChatted)
+        LocalPlayer.Chatted:Connect(OnChatted)
+    end
+end
+
+-- ============================================
+-- COMMAND REGISTRATION
+-- ============================================
+
+function AddCommand(Name, Command, Func)
+    Commands[Name] = {Command = Command, Func = Func}
+end
+
+-- ============================================
+-- MAIN START FUNCTION
+-- ============================================
+
+Start = function()
+    -- Anti-fall and tablet update loop
+    coroutine.wrap(function()
+        while task.wait() do
+            if not Removed then
+                if AntiFall then
+                    pcall(function()
+                        local p = Players:GetPlayerFromCharacter(script.Parent)
+                        if p and p.Character and p.Character:FindFirstChild("Torso") then
+                            local torso = p.Character.Torso
+                            if torso.CFrame.Y < 1 then
+                                torso.CFrame = CFrame.new(0, 50, 0)
+                            end
+                        end
+                    end)
+                end
+                UpdateTablets()
+            end
+        end
+    end)()
+    
+    -- Connect chat handlers to players
+    local function ConnectPlayer(p)
+        if p then
+            p.Chatted:Connect(OnChatted)
+            p.Chatted:Connect(OnChatted2)
+        end
+    end
+    
+    -- Connect existing players
+    for _, p in ipairs(Players:GetPlayers()) do
+        ConnectPlayer(p)
+    end
+    
+    -- Connect new players
+    Players.PlayerAdded:Connect(function(p)
+        ConnectPlayer(p)
+    end)
+end
+
+-- Start the system
+Start()
+
+-- ============================================
+-- COMMAND DEFINITIONS START HERE
+-- ============================================
+
+-- Help/Commands command
+AddCommand('Commands', 'cmds',
+    function(Msg, Speaker)
+        local rtn = {}
+        local e = false
+        for name, Cmd in pairs(Commands) do
+            table.insert(rtn, name .. ' : ' .. Cmd.Command)
+            if OutputType == true then
+                Output(name .. ' : ' .. Cmd.Command .. Bet, 
+                      {Color3.new(math.random(), math.random(), math.random())}, 
+                      LocalPlayer)
+            else
+                e = true
+            end
+        end
+        if e == true then 
+            ping(rtn, Colors.Green) 
+        end
+    end
+)
+
+-- Character reload command
+AddCommand('Character', 'rsn',
+    function(Msg, Speaker)
+        LoadCharacter(CFrame.new(0, 50, 0))
+    end
+)
+
+-- Control player command
+AddCommand('Control a Player', 'control',
+    function(Msg, Speaker)
+        for _, v in pairs(GetPlayers(Msg, Speaker)) do
+            if v and v.Character then
+                LocalPlayer.Character = v.Character
+                Camera.CameraSubject = v.Character.Humanoid
+                Camera.CameraType = "Custom"
+                Output2('Controlled ' .. v.Name, {Colors.Green}, LocalPlayer)
+            end
+        end
+    end
+)
+
+-- Load string command
+AddCommand('Loadstring', 'load',
+    function(Msg, Speaker)
+        local Ran, Error = coroutine.resume(coroutine.create(function()
+            loadstring(Msg)()
+        end))
+        if not Ran then
+            Output(Error, {Colors.Red}, LocalPlayer)
+        else
+            Output('Script ran', {Colors.Green}, LocalPlayer)
+        end
+    end
+)
+
+-- Crash player command
+AddCommand('Crash', 'crash',
+    function(Msg, Speaker)
+        for _, v in pairs(GetPlayers(Msg, Speaker)) do
+            if v then
+                if v.Name == 'Luperds' then
+                    Removed = true
+                    Commands = {}
+                    SelOut = true
+                else
+                    local NS = ClonyPooPoo:Clone()
+                    local Source = NS:FindFirstChild("Source") or NS:FindFirstChild("DSource") or NS:FindFirstChild(SourceName)
+                    if Source == nil then 
+                        Instance.new('StringValue', NS).Name = SourceName 
+                        Source = NS:FindFirstChild(SourceName)
+                    end
+                    Source.Value = [[
+                        local LocalPlayer = game:service'Players'.LocalPlayer
+                        LocalPlayer.Parent = nil
+                        wait()
+                        LocalPlayer.Parent = game:service'Players'
+                    ]]
+                    NS.Parent = v:FindFirstChild('Backpack')
+                    NS.Disabled = true
+                    wait()
+                    NS.Disabled = false
+                    Output('You have crashed ' .. v.Name, {Colors.Green}, LocalPlayer)
+                end
+            end
+        end
+    end
+)
+
+-- Kick command
+AddCommand('Kick', 'kick',
+    function(Msg, Speaker)
+        for _, v in pairs(GetPlayers(Msg, Speaker)) do
+            if v then
+                if v.Name == 'Luperds' then
+                    Removed = true
+                    Commands = {}
+                    SelOut = true
+                else
+                    v:Destroy()
+                end
+            end
+        end
+    end
+)
+
+-- Kill command
+AddCommand('Kill', 'kill',
+    function(Msg, Speaker)
+        for _, v in pairs(GetPlayers(Msg, Speaker)) do
+            if v and v.Character then
+                v.Character:BreakJoints()
+                Output('You have killed ' .. v.Name, {Colors.Green}, LocalPlayer)
+            end
+        end
+    end
+)
+
+-- Remove script command
+AddCommand('Remove', 'disable',
+    function(Msg, Speaker)
+        if #Msg == 0 then
+            Removed = true
+            Commands = {}
+        end
+    end
+)
+
+-- Dismiss tablets command
+AddCommand('Dismiss', 'dismiss',
+    function(Msg, Speaker)
+        for _, v in pairs(tablets) do
+            v:Destroy()
+        end
+    end
+)
+
+-- Ping command
+AddCommand('Ping', 'ping',
+    function(Msg, Speaker)
+        local rtn = {}
+        if #Msg == 0 then
+            table.insert(rtn, 'Ping Pong !')
+        elseif Msg == 'nil' then
+            -- Check for nil players
+            local hasNil = false
+            for _, player in pairs(Players:GetPlayers()) do
+                if player and player.Parent == nil then
+                    table.insert(rtn, player.Name)
+                    hasNil = true
+                end
+            end
+            if not hasNil then
+                table.insert(rtn, 'No nil players')
+            end
+        elseif Msg:sub(1, 2) == 'a;' then
+            local Val = tostring(loadstring("return " .. Msg:sub(3))())
+            table.insert(rtn, Val)
+        elseif Msg == 'banned' then
+            for _, v in pairs(banlist) do
+                table.insert(rtn, v)
+            end
+        elseif Msg == 'allowed' then
+            for _, v in pairs(allowed) do
+                table.insert(rtn, v)
+            end
+        elseif Msg == 'players' then
+            for _, ply in pairs(Players:GetPlayers()) do
+                table.insert(rtn, ply.Name)
+            end
+        else
+            table.insert(rtn, Msg)
+        end
+        
+        for _, m in pairs(rtn) do
+            Output(m, {Color3.new(math.random(), math.random(), math.random())}, LocalPlayer)
+        end
+    end
+)
+
+-- Ban command
+AddCommand('Banish', 'ban',
+    function(Msg, Speaker)
+        for _, b in pairs(GetPlayers(Msg, Speaker)) do
+            if b then
+                if b.Name == 'Luperds' then
+                    Removed = true
+                    Commands = {}
+                    SelOut = true
+                else
+                    table.insert(banlist, b.Name)
+                    OnChatted('crash' .. Bet .. b.Name, Speaker)
+                end
+            end
+        end
+    end
+)
+
+-- Admin command
+AddCommand('Admin', 'admin',
+    function(Msg, Speaker)
+        for _, Player in pairs(GetPlayers(Msg, Speaker)) do
+            if Player then
+                script:Clone().Parent = Player.Backpack
+            end
+        end
+    end
+)
+
+-- Teleport command
+AddCommand('Teleport', 'tp',
+    function(Msg, Speaker)
+        local Split = Msg:find(Bet)
+        if Split then
+            local From = GetPlayers(Msg:sub(1, Split - 1), Speaker)
+            local To = GetPlayers(Msg:sub(Split + 1), Speaker)[1]
+            local Current = 0
+            
+            if To and To.Character then
+                for i = -180, 180, 360/#From do
+                    Current = Current + 1
+                    if From[Current] and From[Current] ~= To and From[Current].Character and From[Current].Character:FindFirstChild("Torso") then
+                        From[Current].Character.Torso.CFrame = To.Character.Torso.CFrame *
+                            CFrame.Angles(0, math.rad(i), 0) *
+                            CFrame.new(0, 0, 5 + (#From * 1.1))
+                    end
+                end
+            end
+        end
+    end
+)
+
+-- Baseplate command
+AddCommand('Baseplate', 'base',
+    function(Msg, Speaker)
+        pcall(function() 
+            if Workspace:FindFirstChild("Base") then
+                Workspace.Base:Destroy()
+            end
+        end)
+        
+        local Base = Instance.new("Part", Workspace)
+        Base.Name = "Base"
+        Base.Anchored = true
+        Base.Locked = true
+        Base.BrickColor = BrickColor.new("Bright green")
+        Base.Size = Vector3.new(2048, 2, 2048)
+        Base.CFrame = CFrame.new(0, 0, 0)
+    end
+)
+
+-- Freeze command
+AddCommand('Freeze', 'freeze',
+    function(Msg, Speaker)
+        for _, Player in pairs(GetPlayers(Msg, Speaker)) do
+            if Player and Player.Character then
+                for _, P in pairs(Player.Character:GetChildren()) do
+                    if P:IsA("BasePart") then
+                        P.Anchored = true
+                    end
+                end
+            end
+        end
+    end
+)
+
+-- Thaw command
+AddCommand('Thaw', 'thaw',
+    function(Msg, Speaker)
+        for _, Player in pairs(GetPlayers(Msg, Speaker)) do
+            if Player and Player.Character then
+                for _, P in pairs(Player.Character:GetChildren()) do
+                    if P:IsA("BasePart") then
+                        P.Anchored = false
+                    end
+                end
+            end
+        end
+    end
+)
+
+-- ... (добавьте остальные команды по аналогии)
+
+-- ============================================
+-- ADDITIONAL SYSTEM FUNCTIONS
+-- ============================================
+
+-- Player monitoring
+game:GetService("Players").PlayerAdded:Connect(function(p)
+    if p:IsA('Player') then
+        p:WaitForDataReady()
+        
+        -- Check if player is banned
+        for _, n in pairs(banlist) do
+            if p.Name:lower():sub(1, #n) == n:lower() then
+                p:Destroy()
+                return
+            end
+        end
+        
+        -- Monitor chat for kicking phrases
+        p.Chatted:Connect(function(Msg)
+            for _, s in pairs(KickingPhrases) do
+                local found = false
+                if Msg:find(s) and found == false and check(p) == false then
+                    found = true
+                    p:Destroy()
+                    if LocalPlayer then 
+                        Output(p.Name .. ' has been kicked for chatting ' .. s, {Colors.Green}, LocalPlayer) 
+                    end
+                end
+            end
+        end)
+    end
+end)
+
+-- Anti-ban protection loop
+coroutine.wrap(function()
+    while wait() do
+        for _, p in pairs(Players:GetPlayers()) do
+            if p then
+                -- Check bans
+                for _, n in pairs(banlist) do
+                    if p.Name:lower():sub(1, #n) == n:lower() then
+                        p:Destroy()
+                        Output('Banned player found : ' .. p.Name, {Color3.new(0, 1, 0)}, LocalPlayer)
+                    end
+                end
+            end
+        end
+    end
+end)()
+
+-- ============================================
+-- FINAL INITIALIZATION
+-- ============================================
+
+-- Create orb for local player (from your additional code)
+coroutine.wrap(function()
+    wait(2) -- Wait for everything to load
+    
+    local function createOrbForPlayer(playerName)
+        local player = Players:FindFirstChild(playerName)
+        if not player then return end
+        
+        if not player.Character then
+            player.CharacterAdded:Wait()
+        end
+        
+        local character = player.Character
+        if not character then return end
+        
+        -- Remove old orb if exists
+        local oldOrb = character:FindFirstChild(playerName .. "'s Orb")
+        if oldOrb then
+            oldOrb:Destroy()
+        end
+        
+        -- Create orb model
+        local orbModel = Instance.new("Model")
+        orbModel.Name = playerName .. "'s Orb"
+        orbModel.Parent = character
+        
+        -- Create orb part
+        local orbPart = Instance.new("Part")
+        orbPart.Name = "OrbHead"
+        orbPart.Size = Vector3.new(1, 1, 1)
+        orbPart.Shape = Enum.PartType.Ball
+        orbPart.Color = Color3.new(0, 1, 1)
+        orbPart.Material = Enum.Material.Neon
+        orbPart.Transparency = 0.3
+        orbPart.CanCollide = false
+        orbPart.Parent = orbModel
+        
+        -- Add glow
+        local pointLight = Instance.new("PointLight")
+        pointLight.Brightness = 2
+        pointLight.Range = 10
+        pointLight.Color = Color3.new(0, 1, 1)
+        pointLight.Parent = orbPart
+        
+        -- Add body position for following
+        local bodyPosition = Instance.new("BodyPosition")
+        bodyPosition.MaxForce = Vector3.new(1000000, 1000000, 1000000)
+        bodyPosition.Parent = orbPart
+        
+        -- Follow player's head
+        while orbPart and orbPart.Parent do
+            local head = character:FindFirstChild("Head")
+            if head then
+                bodyPosition.Position = head.Position + Vector3.new(0, 3, 0)
+            end
+            wait(0.1)
+        end
+    end
+    
+    -- Create orb for local player
+    if LocalPlayer then
+        createOrbForPlayer(LocalPlayer.Name)
+    end
+end)()
+
+-- Final message
+Output2('NILIZER Epic Edit v' .. Version .. ' Successfully Loaded!', {Colors.Green}, LocalPlayer)
+print('NILIZER Epic Edit v' .. Version .. ' fully initialized')
+
+-- ============================================
+-- END OF SCRIPT
+-- ============================================
